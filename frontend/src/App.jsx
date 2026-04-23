@@ -199,6 +199,30 @@ function App() {
     );
   };
 
+  const renderMessageContent = (msg) => {
+    if (msg.text.includes(': ') && (msg.text.toLowerCase().includes('databases') || msg.text.toLowerCase().includes('tables'))) {
+      const [prefix, listStr] = msg.text.split(': ');
+      const items = listStr.split(',').map(s => s.trim()).filter(s => s);
+      
+      return (
+        <div className="markdown-content">
+          <p><strong>{prefix}:</strong></p>
+          <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap' }}>
+            {items.map(item => (
+              <span key={item} className="data-badge">{item}</span>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="markdown-content" style={{ fontSize: '1rem', lineHeight: '1.6' }}>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+      </div>
+    );
+  };
+
   const runBenchmark = async () => {
     setLoading(true);
     setActiveView('evaluation');
