@@ -498,28 +498,6 @@ function App() {
           </div>
         )}
       </main>
-
-        {activeView === 'chat' && (
-          <div className="input-area">
-            <div className="input-container">
-                <textarea 
-                    rows="1" 
-                    placeholder={`Query ${selectedDbName}...`}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
-                />
-                <button 
-                    className="send-btn" 
-                    onClick={() => handleSend()} 
-                    disabled={loading || !input.trim()}
-                >
-                    <Send size={18} />
-                </button>
-            </div>
-          </div>
-        )}
-      </main>
     </div>
   );
 }
