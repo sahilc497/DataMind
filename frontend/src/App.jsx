@@ -199,104 +199,106 @@ function App() {
     );
   };
 
+  const renderMessageContent = (msg) => {
+    // Detect if the text contains a list of databases/tables (e.g., "Available mysql databases: college_fee_system, ...")
+    if (msg.text.includes(': ') && (msg.text.toLowerCase().includes('databases') || msg.text.toLowerCase().includes('tables'))) {
+      const [prefix, listStr] = msg.text.split(': ');
+      const items = listStr.split(',').map(s => s.trim()).filter(s => s);
+      
+      return (
+        <div className="markdown-content">
+          <p><strong>{prefix}:</strong></p>
+          <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap' }}>
+            {items.map(item => (
+              <span key={item} className="data-badge">{item}</span>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="markdown-content" style={{ fontSize: '1rem', lineHeight: '1.6' }}>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+      </div>
+    );
+  };
+
   return (
     <div className="app-container">
       <aside className="sidebar">
         <div className="logo-section">
-          <div className="logo-icon" style={{ background: '#000', color: '#fff' }}><Brain size={18} /></div>
+          <div className="logo-icon"><Brain size={20} color="white" /></div>
           <div className="logo-text">
-            <h1 style={{ letterSpacing: '-0.5px' }}>DataMind</h1>
-            <p style={{ textTransform: 'uppercase', fontSize: '0.6rem', fontWeight: 700, color: '#666' }}>Engineered Analytics</p>
+            <h1>DataMind</h1>
+            <p>Intelligence Engine</p>
           </div>
         </div>
 
         <div className="sidebar-label">Database Configuration</div>
-        <div style={{ padding: '0 12px' }}>
-            <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+        <div style={{ padding: '0 8px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
                 <button 
                     onClick={() => setSelectedDbType('postgres')}
                     className={`nav-item ${selectedDbType === 'postgres' ? 'active' : ''}`}
-                    style={{ flex: 1, justifyContent: 'center', fontSize: '0.75rem' }}
+                    style={{ flex: 1, justifyContent: 'center', fontSize: '0.8rem', padding: '10px' }}
                 >Postgres</button>
                 <button 
                     onClick={() => setSelectedDbType('mysql')}
                     className={`nav-item ${selectedDbType === 'mysql' ? 'active' : ''}`}
-                    style={{ flex: 1, justifyContent: 'center', fontSize: '0.75rem' }}
+                    style={{ flex: 1, justifyContent: 'center', fontSize: '0.8rem', padding: '10px' }}
                 >MySQL</button>
             </div>
             
-            <div className="db-selector" onClick={() => setShowDbDropdown(!showDbDropdown)}>
-                <Database size={14} />
-                <span style={{ fontSize: '0.85rem', flex: 1 }}>{selectedDbName}</span>
-                <ChevronDown size={12} />
-            </div>
-            
-            {showDbDropdown && (
-                <div className="db-dropdown" style={{ left: '12px', right: '12px' }}>
-                {databases.map(db => (
-                    <div 
-                    key={db} 
-                    className={`db-dropdown-item ${selectedDbName === db ? 'active' : ''}`}
-                    onClick={() => { setSelectedDbName(db); setShowDbDropdown(false); }}
-                    >
-                    {db}
+            <div className="db-selector" onClick={() => setShowDbDropdown(!showDbDropdown)} style={{ position: 'relative' }}>
+                <Database size={16} color={selectedDbType === 'mysql' ? '#f59e0b' : '#3b82f6'} />
+                <span style={{ fontSize: '0.9rem', flex: 1, fontWeight: 500 }}>{selectedDbName}</span>
+                <ChevronDown size={14} />
+                
+                {showDbDropdown && (
+                    <div className="db-dropdown">
+                    {databases.map(db => (
+                        <div 
+                        key={db} 
+                        className={`db-dropdown-item ${selectedDbName === db ? 'active' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); setSelectedDbName(db); setShowDbDropdown(false); }}
+                        >
+                        {db}
+                        </div>
+                    ))}
                     </div>
-                ))}
-                </div>
-            )}
-        </div>
-
-        <div className="sidebar-label" style={{ marginTop: '24px' }}>Security & Access</div>
-        <div style={{ padding: '0 12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f8f9fa', padding: '8px', borderRadius: '8px', border: '1px solid #eee' }}>
-                <Shield size={14} color={userRole === 'admin' ? '#ef4444' : '#10b981'} />
-                <select 
-                    value={userRole}
-                    onChange={(e) => setUserRole(e.target.value)}
-                    style={{ background: 'none', border: 'none', outline: 'none', fontSize: '0.85rem', fontWeight: 600, flex: 1, cursor: 'pointer' }}
-                >
-                    <option value="admin">Administrator (Full Access)</option>
-                    <option value="user">Standard User (Read-Only)</option>
-                </select>
+                )}
             </div>
         </div>
 
-        <div className="sidebar-label" style={{ marginTop: '24px' }}>Navigation</div>
+        <div className="sidebar-label">Navigation</div>
         <div className={`nav-item ${activeView === 'chat' ? 'active' : ''}`} onClick={() => setActiveView('chat')}>
           <TableIcon size={18} /> Analytics Chat
         </div>
         <div className={`nav-item ${activeView === 'history' ? 'active' : ''}`} onClick={() => setActiveView('history')}>
           <History size={18} /> Query Log
         </div>
-        <div className={`nav-item ${activeView === 'evaluation' ? 'active' : ''}`} onClick={() => setActiveView('evaluation')}>
-          <Activity size={18} /> Benchmarks
-        </div>
 
-        <button className="new-analysis-btn" onClick={() => setMessages([{ id: Date.now(), type: 'ai', text: 'How can I help you with your data today?' }])} style={{ marginTop: 'auto', marginBottom: '20px' }}>
-          <Plus size={18} /> New Workspace
-        </button>
+        <div className="sidebar-label" style={{ marginTop: 'auto' }}>Security</div>
+        <div className="nav-item" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <Shield size={16} color="#10b981" />
+            <span style={{ fontSize: '0.85rem' }}>{userRole.toUpperCase()} ACCESS</span>
+        </div>
       </aside>
 
       <main className="main-content">
         <header className="top-bar">
           <div className="breadcrumbs">
-            <span style={{ color: '#666' }}>Engine</span>
-            <ChevronRight size={14} color="#ccc" />
-            <span className="breadcrumb-active" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></div>
-                Production-Ready
+            <span style={{ opacity: 0.5 }}>Analytics</span>
+            <ChevronRight size={14} />
+            <span className="breadcrumb-active" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Activity size={14} color="#3b82f6" />
+                {selectedDbName}
             </span>
           </div>
-          <div className="top-bar-right">
-            <div className="search-mini">
-              <Search size={14} color="#666" />
-              <input type="text" placeholder="Search tables or queries..." />
-            </div>
-            <div style={{ position: 'relative' }}>
-                <Bell size={18} color="#666" />
-                <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '8px', height: '8px', background: '#ef4444', borderRadius: '50%', border: '2px solid #fff' }}></div>
-            </div>
-            <User size={18} color="#666" />
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div style={{ padding: '6px 12px', background: '#ecfdf5', color: '#10b981', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, border: '1px solid #d1fae5' }}>SYSTEM ONLINE</div>
+            <User size={20} color="#64748b" />
           </div>
         </header>
 
@@ -308,102 +310,93 @@ function App() {
                   {msg.type === 'ai' ? (
                     <div className="ai-container" style={{ width: '100%' }}>
                       <div className="agent-header">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <Cpu size={14} color="#3b82f6" />
-                          <span style={{ fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Intelligence Layer</span>
-                          {msg.latency && <span style={{ color: '#999', fontSize: '0.7rem' }}>• {msg.latency}</span>}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{ width: '28px', height: '28px', background: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyCenter: 'center', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+                            <Cpu size={16} color="#3b82f6" />
+                          </div>
+                          <span style={{ fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.05em' }}>AI INTELLIGENCE</span>
+                          {msg.latency && <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>• {msg.latency}</span>}
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
-                             {msg.context_used && <div title="Conversation Context Used" style={{ background: '#eff6ff', color: '#3b82f6', padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}><Brain size={10}/> CONTEXT</div>}
                              {msg.confidence_score !== undefined && (
-                                <div style={{ background: msg.confidence_level === 'High' ? '#ecfdf5' : '#fff7ed', color: msg.confidence_level === 'High' ? '#10b981' : '#f59e0b', padding: '2px 8px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <Zap size={10} /> {msg.confidence_score}% CONFIDENCE
+                                <div style={{ background: msg.confidence_level === 'High' ? '#ecfdf5' : '#fff7ed', color: msg.confidence_level === 'High' ? '#10b981' : '#f59e0b', padding: '4px 12px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 800, border: '1px solid currentColor' }}>
+                                    {msg.confidence_score}% CONFIDENCE
                                 </div>
                              )}
                         </div>
                       </div>
                       
-                      <div className="agent-response-card" style={{ border: msg.error ? '1px solid #fecaca' : '1px solid #eee' }}>
-                        <div className="markdown-content" style={{ fontSize: '0.95rem', lineHeight: '1.6' }}>
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
-                        </div>
+                      <div className="agent-response-card">
+                        {renderMessageContent(msg)}
                         
                         {msg.error && (
-                            <div style={{ marginTop: '12px', padding: '12px', background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', color: '#b91c1c', fontSize: '0.85rem', display: 'flex', gap: '8px' }}>
-                                <Lock size={16} style={{ flexShrink: 0 }} />
-                                <div><strong>System Alert:</strong> {msg.error}</div>
+                            <div style={{ marginTop: '20px', padding: '16px', background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '12px', color: '#b91c1c', fontSize: '0.9rem', display: 'flex', gap: '12px' }}>
+                                <Lock size={18} style={{ flexShrink: 0 }} />
+                                <div><strong>System Warning:</strong> {msg.error}</div>
                             </div>
                         )}
 
                         {msg.sql && renderCodeBlock(msg.sql, msg.id)}
 
-                        <div style={{ marginTop: '16px' }}>
-                            <div style={{ display: 'flex', gap: '16px', borderBottom: '1px solid #eee', marginBottom: '12px' }}>
-                                <button className="nav-item active" style={{ padding: '8px 0', fontSize: '0.8rem', background: 'none' }}>Data Output</button>
-                                {msg.query_plan && <button className="nav-item" style={{ padding: '8px 0', fontSize: '0.8rem', background: 'none' }}>Execution Plan</button>}
-                                {msg.explanation && <button className="nav-item" style={{ padding: '8px 0', fontSize: '0.8rem', background: 'none' }}>Insights</button>}
-                            </div>
-                            
-                            {msg.data && renderTable(msg.data)}
-                            
-                            {msg.explanation && (
-                                <div className="markdown-content" style={{ fontSize: '0.85rem', color: '#444', background: '#fcfcfc', padding: '12px', borderRadius: '8px' }}>
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.explanation}</ReactMarkdown>
+                        {(msg.data || msg.explanation || msg.query_plan) && (
+                            <div style={{ marginTop: '24px', borderTop: '1px solid #f1f5f9', paddingTop: '24px' }}>
+                                <div style={{ display: 'flex', gap: '24px', marginBottom: '16px' }}>
+                                    <button className="nav-item active" style={{ padding: '0 0 8px', borderRadius: 0, background: 'none', border: 'none', borderBottom: '2px solid #3b82f6' }}>Data Output</button>
+                                    {msg.explanation && <button className="nav-item" style={{ padding: '0 0 8px', borderRadius: 0, background: 'none', border: 'none', opacity: 0.5 }}>Deep Insights</button>}
                                 </div>
-                            )}
-
-                            {msg.query_plan && (
-                                <details style={{ marginTop: '12px' }}>
-                                    <summary style={{ fontSize: '0.8rem', color: '#666', cursor: 'pointer' }}>View Raw Execution Plan</summary>
-                                    <pre style={{ fontSize: '0.7rem', background: '#f4f4f4', padding: '10px', overflow: 'auto', borderRadius: '4px' }}>{msg.query_plan}</pre>
-                                </details>
-                            )}
-                        </div>
+                                
+                                {msg.data && renderTable(msg.data)}
+                                
+                                {msg.explanation && (
+                                    <div className="markdown-content" style={{ marginTop: '16px', background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.explanation}</ReactMarkdown>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                       </div>
                     </div>
                   ) : (
-                    <div className="bubble" style={{ alignSelf: 'flex-end', background: '#000', color: '#fff', borderRadius: '18px 18px 2px 18px', padding: '12px 20px' }}>{msg.text}</div>
+                    <div className="bubble">{msg.text}</div>
                   )}
                 </div>
               ))}
               {loading && (
                 <div className="message ai">
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#666', fontSize: '0.8rem' }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: '#64748b', fontSize: '0.9rem', background: 'white', padding: '16px 24px', borderRadius: '20px', width: 'fit-content', boxShadow: 'var(--shadow)' }}>
                         <div className="loading-dots"><div className="dot"></div><div className="dot"></div><div className="dot"></div></div>
-                        Processing request through multi-agent orchestration...
+                        <span>Agentic workflow in progress...</span>
                    </div>
                 </div>
               )}
               <div ref={chatEndRef} />
             </>
           ) : (
-            <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>
-                <Activity size={48} style={{ margin: '0 auto 20px', opacity: 0.2 }} />
-                <h3>Module Under Maintenance</h3>
-                <p>History and Benchmarking are being refactored for the multi-database architecture.</p>
-                <button onClick={() => setActiveView('chat')} style={{ marginTop: '20px', color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Return to Analytics</button>
+            <div style={{ padding: '80px 40px', textAlign: 'center', color: '#64748b' }}>
+                <Activity size={64} style={{ margin: '0 auto 24px', opacity: 0.1, color: '#3b82f6' }} />
+                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1e293b' }}>Module Under Refactor</h3>
+                <p style={{ marginTop: '12px' }}>History and Benchmarking are being optimized for the new multi-db engine.</p>
+                <button onClick={() => setActiveView('chat')} style={{ marginTop: '32px', background: '#0f172a', color: 'white', border: 'none', padding: '12px 32px', borderRadius: '12px', fontWeight: 600, cursor: 'pointer' }}>Return to Workspace</button>
             </div>
           )}
         </div>
 
         {activeView === 'chat' && (
-          <div className="input-area" style={{ borderTop: '1px solid #eee', background: '#fff', padding: '20px' }}>
-            <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center' }}>
+          <div className="input-area">
+            <div className="input-container">
                 <textarea 
-                rows="1" 
-                placeholder={`Ask ${selectedDbName} a question (e.g., "Why are sales down?")`}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
-                style={{ width: '100%', padding: '16px 60px 16px 20px', borderRadius: '12px', border: '1px solid #e5e7eb', background: '#f9fafb', fontSize: '1rem', outline: 'none', resize: 'none' }}
-                ></textarea>
+                    rows="1" 
+                    placeholder={`Query ${selectedDbName}...`}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
+                />
                 <button 
                     className="send-btn" 
                     onClick={() => handleSend()} 
                     disabled={loading || !input.trim()}
-                    style={{ position: 'absolute', right: '10px', background: '#000', color: '#fff', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                <Send size={20} />
+                    <Send size={18} />
                 </button>
             </div>
           </div>
