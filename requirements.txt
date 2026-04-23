@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+asyncpg
+mysql-connector-python
+cachetools
+crewai
+langgraph
+langchain-mistralai
+python-dotenv
+langchain
+pydantic
+pydantic-settings
+cachetools
