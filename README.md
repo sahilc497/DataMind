@@ -84,4 +84,4 @@ npm run dev
 The system includes a built-in benchmarking suite to measure accuracy and latency across different database types. Access it via the `/benchmark` endpoint or the UI Evaluation tab.
 
 ## 📜 License
-MIT License. Created by the Advanced Agentic Coding Team.
+MIT License. Created by Sahil Chavan.
