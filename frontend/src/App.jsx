@@ -199,27 +199,93 @@ function App() {
     );
   };
 
-  const renderMessageContent = (msg) => {
-    // Detect if the text contains a list of databases/tables (e.g., "Available mysql databases: college_fee_system, ...")
-    if (msg.text.includes(': ') && (msg.text.toLowerCase().includes('databases') || msg.text.toLowerCase().includes('tables'))) {
-      const [prefix, listStr] = msg.text.split(': ');
-      const items = listStr.split(',').map(s => s.trim()).filter(s => s);
-      
+  const runBenchmark = async () => {
+    setLoading(true);
+    setActiveView('evaluation');
+    try {
+      const res = await axios.get(`${API_BASE}/benchmark`);
+      setEvalStats(res.data);
+    } catch (err) {
+      console.error('Benchmark failed', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderEvaluationView = () => {
+    if (!evalStats) {
       return (
-        <div className="markdown-content">
-          <p><strong>{prefix}:</strong></p>
-          <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap' }}>
-            {items.map(item => (
-              <span key={item} className="data-badge">{item}</span>
-            ))}
-          </div>
+        <div style={{ padding: '80px 40px', textAlign: 'center', color: '#64748b' }}>
+            <Activity size={80} style={{ margin: '0 auto 32px', opacity: 0.1, color: '#3b82f6' }} />
+            <h3 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a' }}>System Performance Audit</h3>
+            <p style={{ marginTop: '16px', fontSize: '1.1rem', maxWidth: '600px', margin: '16px auto' }}>
+                Analyze the accuracy and latency of the multi-agent SQL engine across all connected databases.
+            </p>
+            <button 
+                onClick={runBenchmark} 
+                disabled={loading}
+                style={{ marginTop: '40px', background: '#3b82f6', color: 'white', border: 'none', padding: '16px 40px', borderRadius: '16px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 10px 20px rgba(59, 130, 246, 0.2)' }}
+            >
+                {loading ? 'Executing Audit...' : 'Launch Production Benchmark'}
+            </button>
         </div>
       );
     }
-    
+
     return (
-      <div className="markdown-content" style={{ fontSize: '1rem', lineHeight: '1.6' }}>
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+      <div style={{ animation: 'slideInUp 0.4s ease-out' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' }}>
+            {[
+                { label: 'System Accuracy', value: evalStats.accuracy, icon: <CheckCircle2 size={20} color="#10b981" /> },
+                { label: 'Avg. Latency', value: evalStats.avg_latency, icon: <Clock size={20} color="#3b82f6" /> },
+                { label: 'Confidence Floor', value: evalStats.avg_confidence, icon: <Zap size={20} color="#f59e0b" /> },
+                { label: 'Test Coverage', value: `${evalStats.total_queries} Queries`, icon: <Database size={20} color="#8b5cf6" /> }
+            ].map((stat, i) => (
+                <div key={i} className="agent-response-card" style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>{stat.label}</span>
+                        {stat.icon}
+                    </div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a' }}>{stat.value}</div>
+                </div>
+            ))}
+        </div>
+
+        <div className="agent-response-card" style={{ padding: '0' }}>
+            <div style={{ padding: '24px 32px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Audit Logs</h3>
+                <button onClick={runBenchmark} style={{ background: 'none', border: 'none', color: '#3b82f6', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}>Re-run Audit</button>
+            </div>
+            <div className="data-table-container" style={{ border: 'none', borderRadius: 0 }}>
+                <table className="data-table">
+                    <thead>
+                        <tr>
+                            <th>Engine</th>
+                            <th>Database</th>
+                            <th>Natural Language Query</th>
+                            <th>Status</th>
+                            <th>Latency</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {evalStats.details.map((row, i) => (
+                            <tr key={i}>
+                                <td style={{ fontWeight: 700, fontSize: '0.75rem' }}>{row.db_type.toUpperCase()}</td>
+                                <td><span className="data-badge" style={{ margin: 0 }}>{row.db}</span></td>
+                                <td style={{ fontSize: '0.85rem' }}>{row.query}</td>
+                                <td>
+                                    <div style={{ color: row.success ? '#10b981' : '#ef4444', fontWeight: 700, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        {row.success ? <CheckCircle2 size={12} /> : <Lock size={12} />}
+                                        {row.success ? 'PASSED' : 'FAILED'}
+                                    </div>
+                                </td>
+                                <td style={{ color: '#64748b', fontSize: '0.85rem' }}>{row.latency_ms}ms</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
       </div>
     );
   };
@@ -278,6 +344,9 @@ function App() {
         <div className={`nav-item ${activeView === 'history' ? 'active' : ''}`} onClick={() => setActiveView('history')}>
           <History size={18} /> Query Log
         </div>
+        <div className={`nav-item ${activeView === 'evaluation' ? 'active' : ''}`} onClick={() => setActiveView('evaluation')}>
+          <Activity size={18} /> Engine Audit
+        </div>
 
         <div className="sidebar-label" style={{ marginTop: 'auto' }}>Security</div>
         <div className="nav-item" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -293,7 +362,7 @@ function App() {
             <ChevronRight size={14} />
             <span className="breadcrumb-active" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Activity size={14} color="#3b82f6" />
-                {selectedDbName}
+                {activeView === 'chat' ? selectedDbName : 'System Audit'}
             </span>
           </div>
           <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
@@ -381,12 +450,7 @@ function App() {
               <div ref={chatEndRef} />
             </>
           ) : (
-            <div style={{ padding: '100px 40px', textAlign: 'center', color: '#64748b' }}>
-                <Activity size={80} style={{ margin: '0 auto 32px', opacity: 0.05, color: '#3b82f6' }} />
-                <h3 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a' }}>Module Under Maintenance</h3>
-                <p style={{ marginTop: '16px', fontSize: '1.1rem' }}>The Enterprise Dashboard and History modules are being refactored for scale.</p>
-                <button onClick={() => setActiveView('chat')} style={{ marginTop: '40px', background: '#0f172a', color: 'white', border: 'none', padding: '14px 40px', borderRadius: '16px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>Return to Workspace</button>
-            </div>
+            renderEvaluationView()
           )}
         </div>
 
