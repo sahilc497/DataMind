@@ -11,3 +11,7 @@ langchain
 pydantic
 pydantic-settings
 cachetools
+xgboost
+scikit-learn
+numpy
+pandas

@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     CACHE_ENABLED: bool = True
     CACHE_TTL: int = 3600 # 1 hour
     
+    # Mechanical Copilot Settings
+    MECHANICAL_DB: str = os.getenv("MECHANICAL_DB", "mech_ai_demo")
+    MECHANICAL_DB_TYPE: str = os.getenv("MECHANICAL_DB_TYPE", "mysql")
+    PREDICTION_REFRESH_INTERVAL: int = int(os.getenv("PREDICTION_REFRESH_INTERVAL", "300"))  # 5 min
+    
     model_config = ConfigDict(extra="ignore", env_file=".env")
 
 settings = Settings()

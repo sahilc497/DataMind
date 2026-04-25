@@ -726,3 +726,519 @@ body {
   .segmented-control { display: none; }
   .db-selector span { display: none; }
 }
+
+/* ═══════════════════════════════════════════════
+   MECHANICAL COPILOT — INDUSTRIAL INTELLIGENCE UI
+   ═══════════════════════════════════════════════ */
+
+/* ── Mode Toggle ── */
+.mode-toggle {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  display: flex;
+  position: relative;
+  margin-top: 12px;
+}
+
+.mode-toggle button {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 8px 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  transition: color 0.25s ease;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.mode-toggle button.active { color: var(--text-inverse); }
+
+.mode-toggle .mode-slider {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  height: calc(100% - 6px);
+  border-radius: calc(var(--radius-md) - 2px);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mode-toggle .mode-slider.data { background: rgba(37, 99, 235, 0.25); }
+.mode-toggle .mode-slider.mechanical { background: rgba(234, 88, 12, 0.3); transform: translateX(100%); }
+
+/* ── Mechanical Accent Overrides ── */
+:root {
+  --mech-orange: #EA580C;
+  --mech-orange-soft: rgba(234, 88, 12, 0.08);
+  --mech-orange-border: rgba(234, 88, 12, 0.15);
+  --mech-teal: #0D9488;
+  --mech-teal-soft: rgba(13, 148, 136, 0.08);
+  --mech-amber: #D97706;
+  --mech-amber-soft: rgba(217, 119, 6, 0.08);
+}
+
+/* ── Machine Fleet Grid ── */
+.fleet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 24px;
+  animation: slideInUp 0.4s ease-out;
+}
+
+/* ── Machine Card ── */
+.machine-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px) saturate(120%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.machine-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--mech-orange-border);
+}
+
+.machine-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  transition: opacity 0.3s;
+}
+
+.machine-card.healthy::before { background: linear-gradient(90deg, #22C55E, #10B981); opacity: 0.7; }
+.machine-card.warning::before { background: linear-gradient(90deg, #F59E0B, #D97706); opacity: 0.8; }
+.machine-card.critical::before { background: linear-gradient(90deg, #EF4444, #DC2626); opacity: 0.9; }
+
+.machine-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.machine-card-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.machine-card-type {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ── Health Status Dot ── */
+.health-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.health-dot.green {
+  background: #22C55E;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.health-dot.yellow {
+  background: #F59E0B;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+  animation: glow-pulse 1.5s ease-in-out infinite;
+}
+
+.health-dot.red {
+  background: #EF4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+  animation: glow-pulse 1s ease-in-out infinite;
+}
+
+/* ── Machine Metrics Grid ── */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.metric-item {
+  background: var(--bg-surface-2);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+}
+
+.metric-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.metric-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 2px;
+  letter-spacing: -0.02em;
+}
+
+.metric-value.danger { color: var(--error); }
+.metric-value.warning { color: var(--warning); }
+
+/* ── Failure Probability Bar ── */
+.failure-bar-container {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.failure-bar-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.failure-bar-label span:first-child {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.failure-bar-label span:last-child {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.failure-bar {
+  height: 6px;
+  background: var(--bg-surface-2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.failure-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.failure-bar-fill.low { background: linear-gradient(90deg, #22C55E, #10B981); }
+.failure-bar-fill.medium { background: linear-gradient(90deg, #F59E0B, #D97706); }
+.failure-bar-fill.high { background: linear-gradient(90deg, #EF4444, #DC2626); }
+
+/* ── Severity Badges ── */
+.severity-badge {
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.severity-badge.critical { background: rgba(239, 68, 68, 0.1); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+.severity-badge.high { background: rgba(234, 88, 12, 0.1); color: #EA580C; border: 1px solid rgba(234, 88, 12, 0.2); }
+.severity-badge.medium { background: rgba(245, 158, 11, 0.1); color: #D97706; border: 1px solid rgba(245, 158, 11, 0.2); }
+.severity-badge.low { background: rgba(34, 197, 94, 0.1); color: #22C55E; border: 1px solid rgba(34, 197, 94, 0.2); }
+
+/* ── Insight Banner ── */
+.insight-banner {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-top: 16px;
+  animation: slideUp 0.3s ease-out;
+  border-left: 3px solid var(--mech-orange);
+}
+
+.insight-banner .insight-text {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.insight-banner .insight-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--mech-orange);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+/* ── Mechanical Analysis Card ── */
+.mech-analysis-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-top: 16px;
+  border-left: 3px solid var(--mech-orange);
+}
+
+.mech-analysis-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.mech-analysis-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.physics-explanation {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+/* ── Recommendation Card ── */
+.rec-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-top: 16px;
+}
+
+.rec-card .rec-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.rec-card .rec-urgency {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rec-action-list {
+  list-style: none;
+  padding: 0;
+}
+
+.rec-action-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.rec-action-item:last-child { border-bottom: none; }
+
+.rec-action-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-top: 7px;
+  flex-shrink: 0;
+}
+
+.rec-action-dot.critical { background: #EF4444; }
+.rec-action-dot.high { background: #EA580C; }
+.rec-action-dot.medium { background: #D97706; }
+.rec-action-dot.low { background: #22C55E; }
+
+/* ── Prediction Widget ── */
+.prediction-widget {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.prediction-gauge {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  border: 3px solid;
+}
+
+.prediction-gauge.low { border-color: #22C55E; color: #22C55E; background: rgba(34, 197, 94, 0.06); }
+.prediction-gauge.medium { border-color: #D97706; color: #D97706; background: rgba(217, 119, 6, 0.06); }
+.prediction-gauge.high { border-color: #EF4444; color: #EF4444; background: rgba(239, 68, 68, 0.06); }
+.prediction-gauge.critical { border-color: #DC2626; color: #DC2626; background: rgba(220, 38, 38, 0.08); }
+
+.prediction-details { flex: 1; }
+
+.prediction-details .pred-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.prediction-details .pred-rul {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* ── Quick Action Chips ── */
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 24px 20px;
+}
+
+.quick-chip {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quick-chip:hover {
+  border-color: var(--mech-orange-border);
+  color: var(--mech-orange);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.1);
+}
+
+/* ── Dashboard Header ── */
+.dashboard-header {
+  padding: 24px 24px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.dashboard-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ── Fleet Stats Bar ── */
+.fleet-stats {
+  display: flex;
+  gap: 16px;
+  padding: 16px 24px;
+}
+
+.fleet-stat {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 18px;
+  flex: 1;
+  text-align: center;
+}
+
+.fleet-stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.fleet-stat-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+
+/* ── Mechanical Loading State ── */
+.mech-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px;
+  gap: 20px;
+}
+
+.mech-loading .gear-spin {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

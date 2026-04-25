@@ -1,6 +1,6 @@
-# DataMind Intelligence Engine 🧠
+# Sentinel — Industrial Intelligence Platform 🛡️
 
-A premium, production-ready Text-to-SQL platform designed for high-authority data analysis. DataMind uses a multi-agent orchestration layer (LangGraph) to transform natural language into secure, optimized SQL queries across multiple database engines.
+A premium, production-ready Industrial Intelligence platform with Text-to-SQL capabilities and mechanical AI copilot. Sentinel uses a multi-agent orchestration layer (LangGraph) to transform natural language into secure, optimized SQL queries, predict machine failures with ML, and deliver real-time fleet health insights.
 
 ![Premium UI](https://img.shields.io/badge/UI-Glassmorphism-blue)
 ![Backend](https://img.shields.io/badge/Engine-Multi--DB-green)
@@ -79,4 +79,4 @@ The system enforces a **Read-Only** policy for standard users. All generated SQL
 
 ---
 
-**Developed with ❤️ by Sahil Chavan**
+**Developed by Sahil Chavan**

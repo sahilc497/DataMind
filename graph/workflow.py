@@ -1,5 +1,5 @@
 import operator
-from typing import Annotated, TypedDict, Union, List, Dict, Any
+from typing import Annotated, TypedDict, Union, List, Dict, Any, Optional
 from langgraph.graph import StateGraph, END
 from crewai import Task, Crew
 import asyncio
@@ -20,6 +20,12 @@ from services.rbac_manager import RBACManager
 from cache.caching import QueryCache
 from memory.context_manager import ContextManager
 from services.normalization import SchemaNormalizer
+
+# Mechanical Intelligence Imports
+from services.mechanical_reasoning_engine import MechanicalReasoningEngine
+from services.failure_prediction_model import FailurePredictionModel
+from services.maintenance_advisor import MaintenanceAdvisor
+from services.auto_insights import AutoInsightGenerator
 
 # Global semaphore to limit concurrent LLM calls
 llm_semaphore = asyncio.Semaphore(2)
@@ -55,6 +61,12 @@ class AgentState(TypedDict):
     role: str
     context_used: bool
     history: List[Dict[str, Any]]
+    # Mechanical Copilot fields
+    mode: str  # "data" or "mechanical"
+    mechanical_analysis: Optional[Dict[str, Any]]
+    prediction: Optional[Dict[str, Any]]
+    recommendation: Optional[Dict[str, Any]]
+    insights: Optional[List[Dict[str, Any]]]
 
 # Initialize Agents
 intent_agent = IntentAgent().get_agent()
@@ -84,9 +96,23 @@ async def classify_intent_node(state: AgentState):
 async def schema_node(state: AgentState):
     raw_schema = await SchemaTools.get_normalized_schema(state['db_type'], state['db_name'])
     formatted_schema = SchemaTools.format_for_llm(raw_schema)
+    # Guard: if schema has no tables, set an error early
+    if not raw_schema.get("tables"):
+        return {
+            "schema": formatted_schema,
+            "raw_schema": raw_schema,
+            "error": f"No tables found in database '{state['db_name']}' ({state['db_type']}). Please select a database that contains tables."
+        }
     return {"schema": formatted_schema, "raw_schema": raw_schema}
 
 async def sql_generation_node(state: AgentState):
+    # 0. If schema is empty, short-circuit with a clear error
+    if not state.get('raw_schema', {}).get('tables'):
+        return {
+            "sql": "",
+            "error": f"No tables found in database '{state['db_name']}'. Cannot generate SQL without schema."
+        }
+
     # 1. Caching Check
     schema_hash = SchemaNormalizer.get_schema_hash(state['raw_schema'])
     cached_sql = QueryCache.get_sql(state['user_query'], state['db_type'], schema_hash)
@@ -122,18 +148,22 @@ async def sql_generation_node(state: AgentState):
     return {"sql": sql}
 
 async def validation_node(state: AgentState):
+    # If there's already an error (e.g. from schema_node/sql_generation_node), pass it through
+    if state.get('error') and not state.get('sql'):
+        return {"error": state['error'], "retry_count": state['retry_count'] + 1}
+
     if state['sql'].startswith("-- ERROR"):
-        return {"error": state['sql']}
+        return {"error": state['sql'], "retry_count": state['retry_count'] + 1}
     
     # Hallucination Guard
     is_valid, msg = validator_agent.validate_hallucination(state['sql'], state['raw_schema'])
     if not is_valid:
-        return {"error": msg}
+        return {"error": msg, "retry_count": state['retry_count'] + 1}
         
     # Security Guard
     is_safe, msg = validator_agent.is_safe(state['sql'], state.get('role', 'user'))
     if not is_safe:
-        return {"error": msg}
+        return {"error": msg, "retry_count": state['retry_count'] + 1}
         
     return {"error": ""}
 
@@ -224,7 +254,71 @@ async def db_ops_node(state: AgentState):
 
     return {"result": "Operation completed."}
 
-# Router
+# ═══════════════════════════════════════════════
+#  MECHANICAL INTELLIGENCE NODES (NEW)
+# ═══════════════════════════════════════════════
+
+async def mechanical_reasoning_node(state: AgentState):
+    """Analyze SQL results through mechanical engineering lens."""
+    result = state.get("result")
+    if not isinstance(result, list) or not result:
+        return {"mechanical_analysis": {"diagnoses": [], "health": {"status": "unknown"}}}
+    
+    try:
+        diagnoses = MechanicalReasoningEngine.analyze_machine(result)
+        health = MechanicalReasoningEngine.get_machine_health_status(result)
+        
+        # Generate auto-insights
+        insights = AutoInsightGenerator.generate_from_data(result, state.get("user_query", ""))
+        
+        return {
+            "mechanical_analysis": {
+                "diagnoses": diagnoses,
+                "health": health
+            },
+            "insights": insights
+        }
+    except Exception as e:
+        print(f"Mechanical reasoning error: {e}")
+        return {"mechanical_analysis": {"diagnoses": [], "health": {"status": "error", "error": str(e)}}}
+
+async def prediction_node(state: AgentState):
+    """Run ML failure prediction on sensor data."""
+    result = state.get("result")
+    if not isinstance(result, list) or not result:
+        return {"prediction": {"failure_probability": 0, "risk_level": "unknown", "remaining_useful_life_hours": 999}}
+    
+    try:
+        prediction = FailurePredictionModel.predict(result)
+        return {"prediction": prediction}
+    except Exception as e:
+        print(f"Prediction error: {e}")
+        return {"prediction": {"failure_probability": 0, "risk_level": "error", "remaining_useful_life_hours": 999, "error": str(e)}}
+
+async def recommendation_node(state: AgentState):
+    """Generate maintenance recommendations from analysis + prediction."""
+    diagnoses = []
+    prediction = state.get("prediction", {})
+    
+    analysis = state.get("mechanical_analysis", {})
+    if analysis:
+        diagnoses = analysis.get("diagnoses", [])
+    
+    try:
+        recommendation = MaintenanceAdvisor.generate_recommendations(
+            diagnoses=diagnoses,
+            prediction=prediction,
+            machine_name="Queried Machine"
+        )
+        return {"recommendation": recommendation}
+    except Exception as e:
+        print(f"Recommendation error: {e}")
+        return {"recommendation": {"summary": "Unable to generate recommendations", "actions": [], "urgency": "unknown"}}
+
+# ═══════════════════════════════════════════════
+#  ROUTERS
+# ═══════════════════════════════════════════════
+
 def route_after_intent(state: AgentState):
     print(f"DEBUG: route_after_intent. Intent: {state['intent']}")
     if state['intent'] == "SQL_QUERY": return "extract_schema"
@@ -232,13 +326,34 @@ def route_after_intent(state: AgentState):
     return "db_ops"
 
 def route_after_execution(state: AgentState):
-    if state['error'] and state['retry_count'] < 2: return "generate_sql"
+    # If there's an error but retries not exhausted, retry SQL generation
+    if state['error'] and state['retry_count'] < 2:
+        return "generate_sql"
+    
+    # If there's an error and retries are exhausted, stop — go to final output
+    if state['error']:
+        return "explain_and_visualize"
+    
     if state['intent'] == "INSIGHTS": return "generate_insights"
+    
+    # Route to mechanical pipeline if in mechanical mode
+    mode = state.get("mode", "data")
+    if mode == "mechanical":
+        return "mechanical_reasoning"
+    
     return "explain_and_visualize"
 
-# Build Graph
+def route_after_recommendation(state: AgentState):
+    """After mechanical pipeline, go to explain+visualize for final formatting."""
+    return END
+
+# ═══════════════════════════════════════════════
+#  BUILD GRAPH
+# ═══════════════════════════════════════════════
+
 workflow = StateGraph(AgentState)
 
+# Existing nodes
 workflow.add_node("classify_intent", classify_intent_node)
 workflow.add_node("extract_schema", schema_node)
 workflow.add_node("generate_sql", sql_generation_node)
@@ -248,6 +363,11 @@ workflow.add_node("explain_and_visualize", explain_node)
 workflow.add_node("visualize", visualization_node)
 workflow.add_node("generate_insights", insights_node)
 workflow.add_node("db_ops", db_ops_node)
+
+# New mechanical intelligence nodes
+workflow.add_node("mechanical_reasoning", mechanical_reasoning_node)
+workflow.add_node("failure_prediction", prediction_node)
+workflow.add_node("maintenance_recommendation", recommendation_node)
 
 workflow.set_entry_point("classify_intent")
 
@@ -264,9 +384,16 @@ workflow.add_edge("db_ops", END)
 workflow.add_conditional_edges("execute_sql", route_after_execution, {
     "generate_sql": "generate_sql",
     "generate_insights": "generate_insights",
-    "explain_and_visualize": "explain_and_visualize"
+    "explain_and_visualize": "explain_and_visualize",
+    "mechanical_reasoning": "mechanical_reasoning"
 })
 
+# Mechanical pipeline chain
+workflow.add_edge("mechanical_reasoning", "failure_prediction")
+workflow.add_edge("failure_prediction", "maintenance_recommendation")
+workflow.add_edge("maintenance_recommendation", END)
+
+# Existing end edges
 workflow.add_edge("explain_and_visualize", "visualize")
 workflow.add_edge("visualize", END)
 workflow.add_edge("generate_insights", END)
@@ -274,3 +401,4 @@ workflow.add_edge("generate_insights", END)
 from langgraph.checkpoint.memory import MemorySaver
 memory = MemorySaver()
 app_graph = workflow.compile(checkpointer=memory)
+app_graph.recursion_limit = 50  # Safety net to prevent infinite loops
